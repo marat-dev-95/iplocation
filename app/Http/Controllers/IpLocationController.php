@@ -45,7 +45,7 @@ class IpLocationController extends Controller
         $ipLocation = IpLocation::find($id);
 
         if(empty($ipLocation))
-            return response(['message'=>'not found'], 404);
+            return response(['message'=>'not found'], Response::HTTP_NOT_FOUND);
 
         return new IpLocationResource($ipLocation);
     }
