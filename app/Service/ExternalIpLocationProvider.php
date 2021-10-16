@@ -9,17 +9,15 @@ use Illuminate\Support\Facades\Http;
 
 class ExternalIpLocationProvider implements IpLocationProviderContract
 {
-    private $token;
     private $host;
 
-    public function __construct($token, $host) {
-        $this->token = $token;
+    public function __construct($host) {
         $this->host = $host;
     }
 
     public function getLocationByIp(string $ip): string
     {
-        $response = Http::get($this->host, ['api_token' => $this->token, 'ip' => $ip]);
+        $response = Http::get($this->host.'/'.$ip);
         $response = $response->json();
         return $response['country'];
     }

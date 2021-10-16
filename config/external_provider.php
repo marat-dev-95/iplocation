@@ -1,6 +1,5 @@
 <?php
 
 return [
-    'host' => 'http://example.com',
-    'token' => '123'
+    'host' => 'http://ip-api.com/json'
 ];

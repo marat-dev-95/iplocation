@@ -19,7 +19,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(IpLocationProviderContract::class, function($app) {
             $config = Config::get('external_provider');
-            return new ExternalIpLocationProvider($config['host'], $config['token']);
+            return new ExternalIpLocationProvider($config['host']);
         });
     }
 
