@@ -15,6 +15,9 @@ use Illuminate\Support\Facades\Route;
 */
 
 // for CRUD
-Route::apiResource('iplocation', IpLocationController::class);
+Route::get('iplocation', [IpLocationController::class, 'show']);
+Route::post('iplocation', [IpLocationController::class, 'store']);
+Route::put('iplocation', [IpLocationController::class, 'update']);
+Route::delete('iplocation', [IpLocationController::class, 'destroy']);
 // for UI
 Route::get('/getLocation', [IpLocationController::class, 'getLocation']);

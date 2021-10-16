@@ -15,7 +15,6 @@ class IpLocationResource extends JsonResource
     public function toArray($request)
     {
         return [
-            'id'=>$this->id,
             'country_name' => $this->country_name,
             'ip_address' => $this->ip_address
         ];

@@ -8,17 +8,16 @@ use App\Models\IpLocation;
 use App\Service\Contracts\IpLocationProviderContract;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Arr;
 
 class IpLocationController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
+
+    private $ipLocationProvider;
+
+    public function __construct(IpLocationProviderContract $ipLocationProvider)
     {
-        return IpLocationResource::collection(IpLocation::all());
+        $this->ipLocationProvider = $ipLocationProvider;
     }
 
     /**
@@ -29,9 +28,15 @@ class IpLocationController extends Controller
      */
     public function store(IpLocationStoreRequest $request)
     {
-        $ipLocation = IpLocation::create($request->validated());
+        $ipLocations = $request->ip_locations;
+        $savedLocations = collect();
 
-        return new IpLocationResource($ipLocation);
+        foreach($ipLocations as $ipLocation) {
+            $newIpLocation = IpLocation::create(['country_name'=>$ipLocation['country_name'], 'ip_address' => $ipLocation['ip']]);
+            $savedLocations->push($newIpLocation);
+        }
+
+        return IpLocationResource::collection($savedLocations);
     }
 
     /**
@@ -40,14 +45,21 @@ class IpLocationController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Request $request)
     {
-        $ipLocation = IpLocation::find($id);
+        $ipAddresses = $request->ip_addresses;
+        $ipLocations = IpLocation::whereIn('ip_address', $ipAddresses)->get();
+        $notFoundedIpLocations = array_diff($ipAddresses, $ipLocations->pluck('ip_address')->toArray());
 
-        if(empty($ipLocation))
-            return response(['message'=>'not found'], Response::HTTP_NOT_FOUND);
+        if(!empty($notFoundedIpLocations)) {
+            foreach ($notFoundedIpLocations as $ip) {
+                $country = $this->ipLocationProvider->getLocationByIp($ip);
+                $newIpLocation = IpLocation::create(['country_name'=>$country, 'ip_address'=>$ip]);
+                $ipLocations->push($newIpLocation);
+            }
+        }
 
-        return new IpLocationResource($ipLocation);
+        return IpLocationResource::collection($ipLocations);
     }
 
     /**
@@ -57,15 +69,17 @@ class IpLocationController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(IpLocationStoreRequest $request, $id)
+    public function update(IpLocationStoreRequest $request)
     {
-        $ipLocation = IpLocation::find($id);
-        if(empty($ipLocation))
-            return respose(['message'=>'bad request'], Response::HTTP_BAD_REQUEST);
+        $ipLocations = $request->ip_locations;
 
-        $ipLocation->update($request->validated());
+        foreach($ipLocations as $ipLocation) {
+            IpLocation::where('ip_address', $ipLocation['ip'])
+                ->update(['country_name' => $ipLocation['country_name']]);
+        }
+        $ipLocationsCollection = IpLocation::whereIn('ip_address', Arr::pluck($ipLocations, 'ip'))->get();
 
-        return new IpLocationResource($ipLocation);
+        return IpLocationResource::collection($ipLocationsCollection);
     }
 
     /**
@@ -74,11 +88,10 @@ class IpLocationController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request)
     {
-        $ipLocation = IpLocation::find($id);
-        if($ipLocation)
-            $ipLocation->delete();
+        $ipAddresses = $request->ip_addresses;
+        IpLocation::whereIn('ip_address', $ipAddresses)->delete();
 
         return response(null, Response::HTTP_NO_CONTENT);
     }

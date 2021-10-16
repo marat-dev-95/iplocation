@@ -24,8 +24,9 @@ class IpLocationStoreRequest extends FormRequest
     public function rules()
     {
         return [
-            'ip_address' => 'required|Ip',
-            'country_name' => 'required'
+            'ip_locations' => 'required|array',
+            'ip_locations.*.ip' => 'required|Ip',
+            'ip_locations.*.country_name' => 'required'
         ];
     }
 }
