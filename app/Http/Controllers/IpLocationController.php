@@ -47,19 +47,24 @@ class IpLocationController extends Controller
      */
     public function show(Request $request)
     {
-        $ipAddresses = $request->ip_addresses;
-        $ipLocations = IpLocation::whereIn('ip_address', $ipAddresses)->get();
-        $notFoundedIpLocations = array_diff($ipAddresses, $ipLocations->pluck('ip_address')->toArray());
+        if($request->has('ip_addresses')) {
+            $ipAddresses = $request->ip_addresses;
+            $ipLocations = IpLocation::whereIn('ip_address', $ipAddresses)->get();
+            $notFoundedIpLocations = array_diff($ipAddresses, $ipLocations->pluck('ip_address')->toArray());
 
-        if(!empty($notFoundedIpLocations)) {
-            foreach ($notFoundedIpLocations as $ip) {
-                $country = $this->ipLocationProvider->getLocationByIp($ip);
-                $newIpLocation = IpLocation::create(['country_name'=>$country, 'ip_address'=>$ip]);
-                $ipLocations->push($newIpLocation);
+            if(!empty($notFoundedIpLocations)) {
+                foreach ($notFoundedIpLocations as $ip) {
+                    $country = $this->ipLocationProvider->getLocationByIp($ip);
+                    $newIpLocation = IpLocation::create(['country_name'=>$country, 'ip_address'=>$ip]);
+                    $ipLocations->push($newIpLocation);
+                }
             }
+
+            return IpLocationResource::collection($ipLocations);
+        } else {
+            return IpLocationResource::collection(IpLocation::all());
         }
 
-        return IpLocationResource::collection($ipLocations);
     }
 
     /**
